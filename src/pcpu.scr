@@ -1,0 +1,85 @@
+/* Sample script file for design compiler (dc_shell) */
+/*              Project #2                           */
+
+
+/* Specify libraries and defaults */
+
+designer = "Lucong Jiang"
+company = "Waseda University"
+
+search_path = ". /project2/eda01/syn0412l/libraries/syn/ /project2/eda01/.y6sf8C2/.lib_rohm018_kyoto/rohm018/synthesis"
+
+target_library = {"ROHM18.typ.db"}
+link_library = {"ROHM18.typ.db" "dw_foundation.sldb"}
+symbol_library = { }
+
+synthetic_library = {"dw_foundation.sldb"}
+
+define_design_lib work -path work;
+edifout_netlist_only = "true"
+edifout_power_and_ground_representation = "net"
+edifout_power_net_name = "VDD"
+edifout_ground_net_name = "VSS"
+edifout_no_array = "true"
+
+/* Read and check design */
+read -format verilog {"pcpu.v"} 
+
+/* uniquify */
+current_design = pcpu
+link
+check_design 
+
+/* Set attributes */
+derive_timing_constraints -max_delay_scale 1.00 -min_delay_scale 1.00 -period_scale 1.0
+set_load 1 all_outputs()
+
+create_clock -period 4 -waveform {0 2} clock
+set_dont_touch_network clock
+
+set_max_delay 4 -from select_y -to y
+set_input_delay 2 -clock clock {i_datain, d_datain}
+set_input_delay 4 -clock clock {select_y}
+set_output_delay -2 -clock clock {i_addr, d_addr, d_dataout, d_we}
+set_output_delay -4 -clock clock {y}
+
+set_max_area 42000
+
+/* Optimize logic */
+current_design "pcpu" 
+set_operating_conditions typical
+
+/* Compile */
+compile
+ungroup -all -flatten
+compile -incremental -area_effort high
+/*compile -map_effort high -boundary_optimization*/
+
+/* Check result */
+current_design = pcpu
+bus_naming_style=%sx%dx
+create_schematic -size infinite -hierarchy
+check_design
+link
+report_cell 
+report_area 
+report_constraint
+report_design
+report_timing
+report_timing -path full -delay max -max_paths 4 -nworst 1 -to all_registers(-data_pins)
+
+/* output files */
+write -format db -hierarchy -output pcpu.db
+
+verilogout_no_tri = true 
+verilogout_single_bit = false
+write -format  verilog -hierarchy -output pcpu_syn.v
+write -format edif -hierarchy -output pcpu_syn.edif
+
+report_cell -nosplit -connections -verbose > CellInfo.log
+report_constraint > ConsInfo.log
+report_area > AreaInfo.log
+report_timing -delay max > TimingInfo.log
+report_design > DesignInfo.log
+
+quit

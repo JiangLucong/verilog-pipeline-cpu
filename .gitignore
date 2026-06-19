@@ -1,0 +1,28 @@
+# Verilog / VCS / Icarus simulation artifacts
+csrc/
+*.daidir/
+simv
+simv.*
+*.vpd
+*.vcd
+*.wlf
+*.fsdb
+*.key
+ucli.key
+vc_hdrs.h
+sim
+*.out
+
+# generated memory dump
+dmem.mem
+
+# Quartus / Xilinx
+.Xil/
+work/
+*.jou
+*.log
+*.qws
+
+# OS
+.DS_Store
+Thumbs.db
